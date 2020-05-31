@@ -42,11 +42,20 @@ class App extends Component {
     await contract.methods.set(5).send({ from: accounts[0] });
 
     // Get the value from the contract to prove it worked.
-    const response = await contract.methods.get().call();
+    var response;
+    response = await contract.methods.get().call();
+    this.setState({ storageValue: response });
 
     // Update state with the result.
-    this.setState({ storageValue: response });
   };
+
+  updateValue = async () => {
+    const { accounts, contract } = this.state;
+    await contract.methods.set(this.state.newVal).send({ from: accounts[0] });
+    const response = await contract.methods.get().call();
+    this.setState({ storageValue: response });
+    document.getElementById('input').value = '';
+  }
 
   render() {
     if (!this.state.web3) {
@@ -65,6 +74,8 @@ class App extends Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
         <div>The stored value is: {this.state.storageValue}</div>
+        <input id="input" onChange={(e) => {this.setState({newVal: e.target.value})}}></input>
+        <button onClick={this.updateValue}>Set Stored Value</button>
       </div>
     );
   }
