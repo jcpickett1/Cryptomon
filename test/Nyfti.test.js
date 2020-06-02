@@ -12,10 +12,8 @@ contract('Nyfti', (accounts) => {
     })
 
     describe('deployment', async () => {
-        it('deploys successfully', () => {
-            const address = contract.address;
-            assert(address);
-            assert.notEqual(address, '0x0');
+        it('should deploy successfully', async () => {
+            assert(contract.address)
         })
 
         it('is named correctly', async () => {
@@ -31,57 +29,31 @@ contract('Nyfti', (accounts) => {
 
     describe('minting', async () => {
         it('create a new token', async () => {
-            const result = await contract.mint('Tandy');
+            await contract.mint('Nyfti', 50, 50, 150, 100);
             const totalSupply = await contract.totalSupply();
             assert.equal(totalSupply, 1);
         })
 
         it('should have a new token with given name', async () => {
-            const name = await contract.checkName('Tandy');
+            const name = await contract.checkName('Nyfti');
             assert(name);
         })
 
         it('should not create a new token with an existing name', async () => {
             //A token with an existing name should not be minted
-            await contract.mint('Tandy').should.be.rejected;
+            await contract.mint('Nyfti', 50, 50, 150, 100).should.be.rejected;
         })
     })
 
-    describe('indexing', async() => {
-        it('should list stored names', async () => {
-            await contract.mint('Randy');
-            await contract.mint('Sandy');
-            await contract.mint('Andy');
-            const expected = ['Tandy', 'Randy', 'Sandy', 'Andy'];
-
-            //Check if all newly added names exist in contract
-            const totalSupply = await contract.totalSupply();
-            for(let i = 0; i < totalSupply; i++) {
-                assert.equal(await contract.names(i), expected[i]);
-            }
-        })
-    })
-
-    describe('renaming', async () => {
-        it('should rename a token', async () => {
-            await contract.rename('Randy', 'Blandy');
-
-            //Check that old name is gone
-            let name = await contract.checkName('Randy');
-            assert(!name);
-
-            //Check if the new name is registered
-            name = await contract.checkName('Blandy');
-            assert(name);
-        })
-
-        it('should reassign token ownership', async () => {
-            //Token 'Randy' should belong to 0x0
-            randy = await contract.checkOwner('Randy');
-            assert.equal(randy, '0x0000000000000000000000000000000000000000');
-
-            blandy = await contract.checkOwner('Blandy');
-            assert.equal(blandy, accounts[0]);
+    let statBlock
+    describe('requesting stats', async() => {
+        it('should get stats by index', async () => {
+            statBlock = await contract.getStatBlock(0);
+            assert.equal(statBlock.name, "Nyfti");
+            assert.equal(statBlock.attackPower, '100');
+            assert.equal(statBlock.speed, '150');
+            assert.equal(statBlock.health, '50');
+            assert.equal(statBlock.currHealth, '50');
         })
     })
 });
