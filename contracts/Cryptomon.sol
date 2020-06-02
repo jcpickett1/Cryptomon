@@ -83,7 +83,6 @@ contract Cryptomon is ERC721 {
         _tokenOwner[_oldName] = address(0x0);
         _nameExists[_newName] = true;
         _tokenOwner[_newName] = msg.sender;
-
     }
 
     function getStatBlock(uint _block)
@@ -106,5 +105,12 @@ contract Cryptomon is ERC721 {
         public
     {
         _existingTokens[_ownedTokens[msg.sender][_block] - 1].currHealth = _existingTokens[_ownedTokens[msg.sender][_block] - 1].health;
+    }
+
+    function damage(uint _block, uint8 _hp)
+        public
+    {
+        _existingTokens[_ownedTokens[msg.sender][_block] - 1]
+            .currHealth = _existingTokens[_ownedTokens[msg.sender][_block] - 1].currHealth - _hp;
     }
 }

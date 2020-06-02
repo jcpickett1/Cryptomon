@@ -43,7 +43,7 @@ contract('Cryptomon', (accounts) => {
 
         it('should not create a new token with an existing name', async () => {
             //A token with an existing name should not be minted
-            await contract.mint('Tandy').should.be.rejected;
+            await contract.mint('Tandy', 0, 0, 0, 0).should.be.rejected;
         })
     })
 
@@ -88,6 +88,7 @@ contract('Cryptomon', (accounts) => {
     let statBlock;
     describe('handling stats', async() => {
         it('should get stats by index', async () => {
+            //Data contained in statblock should match minted variables
             statBlock = await contract.getStatBlock(0);
             assert.equal(statBlock.name, "Tandy");
             assert.equal(statBlock.attackPower, '0');
@@ -97,13 +98,22 @@ contract('Cryptomon', (accounts) => {
         })
 
         it('should update health', async () => {
-            hp = await contract.updateHealth(0,10);
+            //Set current health to 10
+            await contract.updateHealth(0,10);
             _hp = await contract.getStatBlock(0);
             assert.equal(_hp.currHealth, '10');
         })
 
+        it('should take damage', async () => {
+            //Should decrement current health
+            await contract.damage(0, 5);
+            _hp = await contract.getStatBlock(0);
+            assert.equal(_hp.currHealth, '5')
+        })
+
         it('should restore health', async () => {
-            hp = await contract.rest(0);
+            //Reset current health to maximum
+            await contract.rest(0);
             _hp = await contract.getStatBlock(0);
             assert.equal(_hp.currHealth, '0');
         })
