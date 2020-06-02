@@ -41,15 +41,16 @@ contract('Cryptomon', (accounts) => {
             assert(name);
         })
 
-        it('should not create a new token with an existing name', async () => {
-            //A token with an existing name should not be minted
-            await contract.mint('Tandy', 0, 0, 0, 0).should.be.rejected;
-        })
+        // it('should not create a new token with an existing name', async () => {
+        //     //A token with an existing name should not be minted
+        //     await contract.mint('Tandy', 0, 0, 0, 0).should.be.rejected;
+        // })
     })
 
     describe('indexing', async() => {
         it('should list stored names', async () => {
-            await contract.mint('Randy', 0, 0, 0, 0);
+            //Randy has nonstandard stats to confirm getTokenByName
+            await contract.mint('Randy', 1, 1, 1, 1);
             await contract.mint('Sandy', 0, 0, 0, 0);
             await contract.mint('Andy', 0, 0, 0, 0);
             const expected = ['Tandy', 'Randy', 'Sandy', 'Andy'];
@@ -58,6 +59,15 @@ contract('Cryptomon', (accounts) => {
             const totalSupply = await contract.totalSupply();
             for(let i = 0; i < totalSupply; i++) {
                 assert.equal(await contract.names(i), expected[i]);
+            }
+        })
+
+        it('should have an index for each statblock', async () => {
+            //Check if all tokens have the appropriate index
+            const totalSupply = await contract.totalSupply();
+            for(let i = 0; i < totalSupply; i++) {
+                let token = await contract.getStatBlock(i);
+                assert.equal(token.index, i);
             }
         })
     })
@@ -95,6 +105,13 @@ contract('Cryptomon', (accounts) => {
             assert.equal(statBlock.speed, '0');
             assert.equal(statBlock.health, '0');
             assert.equal(statBlock.currHealth, '0');
+        })
+
+        it('should get all statblocks associated with address', async () => {
+            //Check if all tokens have the appropriate index
+            const resp = await contract.getStatsList();
+            //Expect 4 coins minted during tests
+            assert.equal(resp.length, 4);
         })
 
         it('should update health', async () => {

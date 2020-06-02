@@ -8,6 +8,7 @@ contract Cryptomon is ERC721 {
     string[] public names;
     struct statBlock {
         string name;
+        uint index;
         uint8 health;
         uint8 currHealth;
         uint8 speed;
@@ -19,7 +20,7 @@ contract Cryptomon is ERC721 {
     mapping(address => uint[]) _ownedTokens;
     statBlock[] _existingTokens;
 
-     modifier onlyOwner(string memory _name) {
+    modifier onlyOwner(string memory _name) {
         require(
             msg.sender == _tokenOwner[_name],
             "Only owner can call this function."
@@ -27,7 +28,7 @@ contract Cryptomon is ERC721 {
         _;
     }
 
-     modifier newName(string memory _oldName, string memory _newName) {
+    modifier newName(string memory _oldName, string memory _newName) {
         require(
             _nameExists[_oldName],
             "Old name not assigned to any token."
@@ -43,7 +44,7 @@ contract Cryptomon is ERC721 {
     }
 
     function mint(string memory _name, uint8 _health, uint8 _currHealth, uint8 _speed, uint8 _attackPower) public {
-        require(!_nameExists[_name], 'Name already taken');
+        // require(!_nameExists[_name], 'Name already taken');
         names.push(_name);
         uint _id = names.length;
 
@@ -53,7 +54,7 @@ contract Cryptomon is ERC721 {
         //Record ownership data to contract
         _nameExists[_name] = true;
         _tokenOwner[_name] = msg.sender;
-        statBlock memory stats = statBlock(_name, _health, _currHealth, _speed, _attackPower);
+        statBlock memory stats = statBlock(_name, _existingTokens.length, _health, _currHealth, _speed, _attackPower);
         _existingTokens.push(stats);
         _ownedTokens[msg.sender].push(_existingTokens.length);
     }
@@ -93,6 +94,18 @@ contract Cryptomon is ERC721 {
         require(_block < _ownedTokens[msg.sender].length, "Specified a nonexistant token index");
         statBlock memory resp = _existingTokens[_ownedTokens[msg.sender][_block] - 1];
         return resp;
+    }
+    function getStatsList()
+        public
+        view
+        returns(statBlock[] memory)
+    {
+        statBlock[] memory stats = new statBlock[](_ownedTokens[msg.sender].length);
+        for(uint i = 0; i < _ownedTokens[msg.sender].length; i++)
+        {
+            stats[i] = _existingTokens[_ownedTokens[msg.sender][i] - 1];
+        }
+        return stats;
     }
 
     function updateHealth(uint _block, uint8 _hp)

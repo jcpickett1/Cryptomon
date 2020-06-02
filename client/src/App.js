@@ -40,7 +40,7 @@ class App extends Component {
     const { accounts, contract } = this.state;
 
     // Stores a given value, 5 by default.
-    await contract.methods.mint("Tan3dy", 0, 0, 0, 0).send({ from: accounts[0] });
+    await contract.methods._mint("Tandy").send({ from: accounts[0] });
     // Get the value from the contract to prove it worked.
     var response;
     response = await contract.methods.getStatBlock(0).call();
@@ -50,8 +50,8 @@ class App extends Component {
 
   updateValue = async () => {
     const { accounts, contract } = this.state;
-    await contract.methods.set(this.state.newVal).send({ from: accounts[0] });
-    const response = await contract.methods.get().call();
+    await contract.methods._mint(this.state.newVal).send({ from: accounts[0] });
+    let response = await contract.methods.getStatBlock()
     this.setState({ storageValue: response });
     document.getElementById('input').value = '';
   }
