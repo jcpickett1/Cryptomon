@@ -9,6 +9,6 @@ contract Nyfti is Cryptomon {
     }
 
     function _mint(string memory _name) public {
-        mint(_name, 50, 50, 150, 100);
+        mint(_name, 50, 50, 150, 100, "Fly", "Fairy Dust", "Glamour", "Mire");
     }
 }

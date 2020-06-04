@@ -31,7 +31,7 @@ contract('Cryptomon', (accounts) => {
 
     describe('minting', async () => {
         it('create a new token', async () => {
-            await contract.mint('Tandy', 0, 0, 0, 0);
+            await contract.mint('Tandy', 0, 0, 0, 0, "a", "b", "c", "d");
             const totalSupply = await contract.totalSupply();
             assert.equal(totalSupply, 1);
         })
@@ -50,9 +50,9 @@ contract('Cryptomon', (accounts) => {
     describe('indexing', async() => {
         it('should list stored names', async () => {
             //Randy has nonstandard stats to confirm getTokenByName
-            await contract.mint('Randy', 1, 1, 1, 1);
-            await contract.mint('Sandy', 0, 0, 0, 0);
-            await contract.mint('Andy', 0, 0, 0, 0);
+            await contract.mint('Randy', 1, 1, 1, 1, "a", "b", "c", "d");
+            await contract.mint('Sandy', 0, 0, 0, 0, "a", "b", "c", "d");
+            await contract.mint('Andy', 0, 0, 0, 0, "a", "b", "c", "d");
             const expected = ['Tandy', 'Randy', 'Sandy', 'Andy'];
 
             //Check if all newly added names exist in contract
@@ -100,6 +100,7 @@ contract('Cryptomon', (accounts) => {
         it('should get stats by index', async () => {
             //Data contained in statblock should match minted variables
             statBlock = await contract.getStatBlock(0);
+            assert.equal(statBlock.abilities.join(','), ["a","b","c","d"].join(','));
             assert.equal(statBlock.name, "Tandy");
             assert.equal(statBlock.attackPower, '0');
             assert.equal(statBlock.speed, '0');
