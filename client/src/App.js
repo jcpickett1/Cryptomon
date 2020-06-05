@@ -2,8 +2,11 @@ import React, { Component } from "react";
 import CryptomonContract from "./contracts/Nyfti.json";
 import getWeb3 from "./getWeb3";
 import Arena from './components/Arena';
+import openSocket from 'socket.io-client';
+import 'axios';
 
 import "./App.css";
+import Axios from "axios";
 
 class App extends Component {
   state = { storageValue: 0, web3: null, accounts: null, contract: null };
@@ -25,6 +28,11 @@ class App extends Component {
       );
       this.computeTurn = this.computeTurn.bind(this);
 
+      const socket = openSocket('http://172.21.249.78:5000');
+      socket.on('action1', (e) => { console.log('io emitted: ', e) });
+      socket.on('battleFound', (e) => { console.log('battleFound', e); this.setState({ battleId: e }) });
+      socket.on('updateBattle', this.updateBattle);
+
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.setState(
@@ -43,6 +51,37 @@ class App extends Component {
       console.error(error);
     }
   };
+
+  findBattle = async () => {
+    Axios.post('http://172.21.249.78:5000/initiate', { stats: this.state.battlePlayer, account: this.state.accounts[0] })
+      .then((resp) => {
+        console.log(resp);
+        this.setState({ position: resp.data.position })
+      })
+  }
+
+  updateBattle = async () => {
+    Axios.get('http://172.21.249.78:5000/updateBattle', {
+      params: {
+        arena: this.state.battleId
+      }
+    }).then((resp => {
+      console.log(resp);
+      let _ind = this.state.position == 1 ? 0 : 1;
+      this.setState({ battleOpponent: resp.data.data.battle[_ind], battlePlayer: resp.data.data.battle[this.state.position] })
+    }))
+  }
+
+  battleAction = async () => {
+    Axios.post('http://172.21.249.78:5000/battleAction', {
+      arena: this.state.battleId,
+      position: this.state.position
+    })
+  }
+
+  updateOpponent = async (stats) => {
+
+  }
 
   runExample = async () => {
     const { accounts, contract } = this.state;
@@ -70,7 +109,7 @@ class App extends Component {
       attackPower: response.attackPower,
     }
     // Update state with the result.
-    this.setState({ storageValue: response, battlePlayer: resp1, battleOpponent: resp2 });
+    this.setState({ storageValue: response, battlePlayer: resp1 });
   };
 
   updateValue = async () => {
@@ -164,6 +203,7 @@ class App extends Component {
     }
     return (
       <div className="App">
+        {/* <script src="/socket.io/socket.io.js">var socket = io(); socket.on('action', () => { console.log('action') })</script> */}
         <h1>Good to Go!</h1>
         <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
@@ -171,9 +211,9 @@ class App extends Component {
           If your contracts compiled and migrated successfully, below will show
           a stored value of 5 (by default).
         </p>
-        <p>
-          Try changing the value stored on <strong>line 40</strong> of App.js.
-        </p>
+        <button onClick={this.findBattle}>Find Battle</button>
+        <button onClick={this.updateBattle}>Update Battle</button>
+        <button onClick={this.battleAction}>Battle Action</button>
         {/* <input id="input" onChange={(e) => {this.setState({newVal: e.target.value})}}></input>
         <button onClick={this.updateValue}>Set Stored Value</button> */}
         <Arena computeTurn={this.computeTurn} playerHealth={this.state.battlePlayer.currHealth} opponentHealth={this.state.battleOpponent.currHealth} />
