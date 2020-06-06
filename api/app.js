@@ -13,7 +13,6 @@ app.post('/', async (req, res, next) => {
 });
 
 app.get('/updateBattle', async (req, res, next) => {
-    console.log(req.query.arena);
     let battleInfo = await updateBattle(req.query.arena);
     return res.status(200).send(battleInfo);
 })
@@ -34,7 +33,7 @@ app.post('/initiate', async (req, res, next) => {
 app.post('/battleAction', async (req,res,next) => {
     let { arena, position } = req.body;
     let action2 = await action(arena, position);
-    io.emit('updateBattle', req.body);
+    io.emit('updateBattle' + arena, req.body);
     return res.status(200).send();
 });
 

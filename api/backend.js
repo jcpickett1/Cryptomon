@@ -11,9 +11,7 @@ const couch = new NodeCouchDb({
 var queue = [/* array of objects of player stats */];
 
 async function action(arena, position) {
-    console.log(arena);
     let prev = await couch.get("arenas", arena);
-    console.log(prev);
     let battle = prev.data.battle;
     let pos = position == 0 ? 1 : 0;
     battle[pos].currHealth -= 10;

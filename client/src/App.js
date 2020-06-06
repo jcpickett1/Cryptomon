@@ -30,8 +30,7 @@ class App extends Component {
 
       const socket = openSocket('http://172.21.249.78:5000');
       socket.on('action1', (e) => { console.log('io emitted: ', e) });
-      socket.on('battleFound', (e) => { console.log('battleFound', e); this.setState({ battleId: e }) });
-      socket.on('updateBattle', this.updateBattle);
+      socket.on('battleFound', async (e) => { console.log('battleFound', e); this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); });
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
