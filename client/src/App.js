@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import CryptomonContract from "./contracts/Nyfti.json";
+import Seraph from "./contracts/Seraph.json";
 import getWeb3 from "./getWeb3";
 import Arena from './components/Arena';
 import openSocket from 'socket.io-client';
@@ -22,15 +23,23 @@ class App extends Component {
       // Get the contract instance.
       const networkId = await web3.eth.net.getId();
       const deployedNetwork = CryptomonContract.networks[networkId];
+      const seraphNet = Seraph.networks[networkId];
       const instance = new web3.eth.Contract(
         CryptomonContract.abi,
         deployedNetwork && deployedNetwork.address,
       );
-      this.computeTurn = this.computeTurn.bind(this);
+      const seraph = new web3.eth.Contract(
+        Seraph.abi,
+        seraphNet && seraphNet.address,
+      );
+      console.log(seraph);
+      // console.log(instance);
+      this.battleAction = this.battleAction.bind(this);
 
       const socket = openSocket('http://172.21.249.78:5000');
+      this.socket = socket;
       socket.on('action1', (e) => { console.log('io emitted: ', e) });
-      socket.on('battleFound', async (e) => { console.log('battleFound', e); this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); });
+      socket.on('battleFound', async (e) => { console.log('battleFound', e); this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); this.updateBattle(); });
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -38,8 +47,8 @@ class App extends Component {
         { web3,
           accounts,
           contract: instance,
-          nyftiList: [],
-          battlePlayer: {},
+          seraph: seraph,
+          battlePlayer: { abilities:[] },
           battleOpponent: {}
         }, this.runExample);
     } catch (error) {
@@ -65,9 +74,9 @@ class App extends Component {
         arena: this.state.battleId
       }
     }).then((resp => {
-      console.log(resp);
-      let _ind = this.state.position == 1 ? 0 : 1;
-      this.setState({ battleOpponent: resp.data.data.battle[_ind], battlePlayer: resp.data.data.battle[this.state.position] })
+      let _ind = this.state.position === 1 ? 0 : 1;
+      this.setState({ battleOpponent: resp.data[_ind], battlePlayer: resp.data[this.state.position] })
+      // this.socket.removeListener('battleFound');
     }))
   }
 
@@ -76,6 +85,45 @@ class App extends Component {
       arena: this.state.battleId,
       position: this.state.position
     })
+  }
+
+  mintNyfti = async () => {
+    let { contract, accounts } = this.state;
+    await contract.methods._mint('Nyfti').send({ from: accounts[0] });
+    var response;
+    response = await contract.methods.getStatBlock(0).call();
+    let newPlayer = {
+      name: response.name,
+      index: response.index,
+      health: response.health,
+      currHealth: response.currHealth,
+      speed: response.speed,
+      attackPower: response.attackPower,
+      abilities: response.abilities
+    }
+    console.log('=============',response)
+    console.log('=============',newPlayer)
+    this.setState({ battlePlayer: newPlayer })
+  }
+
+  mintSeraph = async () => {
+    let { seraph, accounts } = this.state;
+    let mint = await seraph.methods._mint('Seraph').send({ from: accounts[0] });
+    console.log(mint);
+    var response;
+    response = await seraph.methods.getStatBlock(0).call();
+    let newPlayer = {
+      name: response.name,
+      index: response.index,
+      health: response.health,
+      currHealth: response.currHealth,
+      speed: response.speed,
+      attackPower: response.attackPower,
+      abilities: response.abilities
+    }
+    console.log('=============',response)
+    console.log('=============',newPlayer)
+    this.setState({ battlePlayer: newPlayer })
   }
 
   updateOpponent = async (stats) => {
@@ -97,104 +145,18 @@ class App extends Component {
       currHealth: response.currHealth,
       speed: response.speed,
       attackPower: response.attackPower,
+      abilities: response.abilities
     }
     response = await contract.methods.getStatBlock(1).call();
-    let resp2 = {
-      name: response.name,
-      index: response.index,
-      health: response.health,
-      currHealth: response.currHealth,
-      speed: response.speed,
-      attackPower: response.attackPower,
-    }
-    // Update state with the result.
-    this.setState({ storageValue: response, battlePlayer: resp1 });
   };
 
-  updateValue = async () => {
-    const { accounts, contract } = this.state;
-    await contract.methods._mint(this.state.newVal).send({ from: accounts[0] });
-    let response = await contract.methods.getStatsList().call();
-    this.setState({ nyftiList: response });
-    document.getElementById('input').value = '';
-  };
-
-  computeTurn = async (playerAction) => {
-    //Player action coded as integer. 1 Attack 2 Defend 3 Run
-    switch(playerAction) {
-      case 1:
-        {
-          const mult = Math.random() + 0.5;
-          let dmg = mult * this.state.battlePlayer.attackPower;
-          let ref = this.state.battleOpponent;
-          if(this.state.battleOpponent.guarded) {
-            dmg = dmg * 0.5;
-            this.state.battleOpponent.guarded = false;
-          }
-          console.log("opponent", ref);
-          console.log("damage", dmg);
-          ref.currHealth -= dmg;
-          console.log("outcome", ref.currHealth);
-          this.setState({ battleOpponent: ref });
-        }
-        break;
-      case 2:
-        {
-          let ref = this.state.battlePlayer;
-          ref.guarded = true;
-          this.setState({ battlePlayer: ref });
-        }
-        break;
-      case 3:
-        {
-          let quotient = this.state.battlePlayer.speed / (this.state.battleOpponent.speed + 100);
-          if(Math.random() <= quotient) {
-            this.setState({ battleOpponent: {} });
-          }
-        }
-        break;
-      default:
-        {
-          let quotient = this.state.battlePlayer.speed / (this.state.battleOpponent.speed + 100);
-          if(Math.random() <= quotient) {
-            this.setState({ battlePlayer: {}, battleOpponent: {} });
-          }
-        }
-        break;
-
-    }
-    if(this.state.battleOpponent.currHealth <= 0 || !this.state.battleOpponent.currHealth) {
-      this.setState({ battleOpponent: {} });
-      return;
-    }
-    if(Math.random >= 0.5) {
-      const mult = Math.random() + 0.5;
-      let ref = this.state.battlePlayer;
-      let dmg = mult * ref.attackPower;
-      console.log("player", ref);
-      if(ref.guarded) {
-        dmg = dmg * 0.5;
-        ref.guarded = false;
-      }
-      console.log("damage", dmg);
-      ref.currHealth -= dmg;
-      
-      console.log("outcome", ref.currHealth);
-      this.setState({ battlePlayer: ref })
-    } else {
-      const mult = Math.random() + 0.5;
-      let ref = this.state.battlePlayer;
-      let dmg = mult * ref.attackPower;
-      console.log("player", ref);
-      console.log("damage", dmg);
-      console.log("outcome", ref.currHealth);
-      ref.currHealth -= dmg;
-      this.setState({ battlePlayer: ref })
-    }
-    if(this.state.battlePlayer.currHealth <= 0 || !this.state.battlePlayer.currHealth) {
-      this.setState({ battleOpponent: {} });
-    }
-  }
+  // updateValue = async () => {
+  //   const { accounts, contract } = this.state;
+  //   await contract.methods._mint(this.state.newVal).send({ from: accounts[0] });
+  //   let response = await contract.methods.getStatsList().call();
+  //   this.setState({ nyftiList: response });
+  //   document.getElementById('input').value = '';
+  // };
 
   render() {
     if (!this.state.web3) {
@@ -202,7 +164,6 @@ class App extends Component {
     }
     return (
       <div className="App">
-        {/* <script src="/socket.io/socket.io.js">var socket = io(); socket.on('action', () => { console.log('action') })</script> */}
         <h1>Good to Go!</h1>
         <p>Your Truffle Box is installed and ready.</p>
         <h2>Smart Contract Example</h2>
@@ -210,12 +171,21 @@ class App extends Component {
           If your contracts compiled and migrated successfully, below will show
           a stored value of 5 (by default).
         </p>
+        <button onClick={this.mintNyfti}>Mint Nyfti</button>
+        <button onClick={this.mintSeraph}>Mint Seraph</button>
         <button onClick={this.findBattle}>Find Battle</button>
         <button onClick={this.updateBattle}>Update Battle</button>
-        <button onClick={this.battleAction}>Battle Action</button>
         {/* <input id="input" onChange={(e) => {this.setState({newVal: e.target.value})}}></input>
         <button onClick={this.updateValue}>Set Stored Value</button> */}
-        <Arena computeTurn={this.computeTurn} playerHealth={this.state.battlePlayer.currHealth} opponentHealth={this.state.battleOpponent.currHealth} />
+        <Arena
+          battleAction={this.battleAction}
+          playerAbilities={this.state.battlePlayer.abilities}
+          playerHealth={this.state.battlePlayer.currHealth}
+          playerAttack={this.state.battlePlayer.attackPower}
+          playerSpeed={this.state.battlePlayer.speed}
+          opponentHealth={this.state.battleOpponent.currHealth}
+          opponentAttack={this.state.battleOpponent.attackPower}
+          opponentSpeed={this.state.battlePlayer.speed} />
       </div>
     );
   }

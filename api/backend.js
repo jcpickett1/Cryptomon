@@ -9,53 +9,33 @@ const couch = new NodeCouchDb({
 });
 
 var queue = [/* array of objects of player stats */];
+var arenas = [/* array of battle objects containing both players' stats */]
 
 async function action(arena, position) {
-    let prev = await couch.get("arenas", arena);
-    let battle = prev.data.battle;
-    let pos = position == 0 ? 1 : 0;
-    battle[pos].currHealth -= 10;
-    couch.update("arenas", {
-        _id: arena,
-        _rev: prev.data._rev,
-        battle: battle
-    });
+    let battle = arenas[arena - 1];
+    let pos = (position == 0) ? 1 : 0;
+    battle[pos].currHealth -= battle[position].attackPower / 10;
     return null;
 }
 
 async function confirmBattle(account) {
-    let battleData = couch.get('arenas', account + queue[0].account)
+    let battleData = couch.get('arenas', account + queue[0].account);
     queue = [];
     return battleData;
 }
 
 async function enterQueue(stats, account) {
-    // if(queue.length >= 1) {
-    //     couch.update("arenas", { _id: queue[0].id, _rev: '1-complete', one: stats });
-    //     return  { complete: true, position: 1, doc: queue[0].id };
-    // }
-    // else
-    // {
-    //     let data = { zero: stats };
-    //     let insert = await couch.insert("arenas", data);
-    //     data.docId = insert.data.id;
-    //     queue.push(data);
-    //     return { complete: false, position: 0, docId: insert.data.docId };
-    // }
     queue.push(stats);
-    var insert;
     if(queue[1]) {
-        // if(queue[1].currHealth) {
-            insert = await couch.insert("arenas", { battle: queue });
-            queue = [];
-            return { complete: true, position: queue.length - 1, docId: insert.data.id }
-        // }
+        arenas.push(queue);
+        queue = [];
+        return { complete: true, position: queue.length - 1, docId: arenas.length, gameId: arenas.length }
     }
-    return { complete: false, position: queue.length - 1 }
+    return { complete: false, position: queue.length - 1, gameId: arenas.length + 1 }
 }
 
 async function updateBattle(arenaId) {
-    return await couch.get("arenas", arenaId);
+    return arenas[arenaId - 1];
 }
 
 module.exports = { action, enterQueue, confirmBattle, updateBattle }
