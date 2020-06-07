@@ -32,12 +32,11 @@ class App extends Component {
         Seraph.abi,
         seraphNet && seraphNet.address,
       );
-      console.log(seraph);
-      // console.log(instance);
       this.battleAction = this.battleAction.bind(this);
 
       const socket = openSocket('http://172.21.249.78:5000');
       this.socket = socket;
+      window.mintSeraph = this.mintSeraph;
       socket.on('action1', (e) => { console.log('io emitted: ', e) });
       socket.on('battleFound', async (e) => { console.log('battleFound', e); this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); this.updateBattle(); });
 
@@ -63,8 +62,7 @@ class App extends Component {
   findBattle = async () => {
     Axios.post('http://172.21.249.78:5000/initiate', { stats: this.state.battlePlayer, account: this.state.accounts[0] })
       .then((resp) => {
-        console.log(resp);
-        this.setState({ position: resp.data.position })
+        this.setState({ position: resp.data.position });
       })
   }
 
@@ -74,9 +72,9 @@ class App extends Component {
         arena: this.state.battleId
       }
     }).then((resp => {
+      if(resp.data[1]) this.socket.off('battleFound');
       let _ind = this.state.position === 1 ? 0 : 1;
-      this.setState({ battleOpponent: resp.data[_ind], battlePlayer: resp.data[this.state.position] })
-      // this.socket.removeListener('battleFound');
+      this.setState({ battleOpponent: resp.data[_ind], battlePlayer: resp.data[this.state.position] });
     }))
   }
 
@@ -101,17 +99,14 @@ class App extends Component {
       attackPower: response.attackPower,
       abilities: response.abilities
     }
-    console.log('=============',response)
-    console.log('=============',newPlayer)
-    this.setState({ battlePlayer: newPlayer })
+    this.setState({ battlePlayer: newPlayer });
   }
 
-  mintSeraph = async () => {
+  mintSeraph = async (_name) => {
     let { seraph, accounts } = this.state;
-    let mint = await seraph.methods._mint('Seraph').send({ from: accounts[0] });
-    console.log(mint);
+    await seraph.methods._mint(_name).send({ from: accounts[0] });
     var response;
-    response = await seraph.methods.getStatBlock(0).call();
+    response = await seraph.methods.getStatBlock(1).call();
     let newPlayer = {
       name: response.name,
       index: response.index,
@@ -121,13 +116,7 @@ class App extends Component {
       attackPower: response.attackPower,
       abilities: response.abilities
     }
-    console.log('=============',response)
-    console.log('=============',newPlayer)
-    this.setState({ battlePlayer: newPlayer })
-  }
-
-  updateOpponent = async (stats) => {
-
+    this.setState({ battlePlayer: newPlayer });
   }
 
   runExample = async () => {
@@ -148,15 +137,9 @@ class App extends Component {
       abilities: response.abilities
     }
     response = await contract.methods.getStatBlock(1).call();
-  };
 
-  // updateValue = async () => {
-  //   const { accounts, contract } = this.state;
-  //   await contract.methods._mint(this.state.newVal).send({ from: accounts[0] });
-  //   let response = await contract.methods.getStatsList().call();
-  //   this.setState({ nyftiList: response });
-  //   document.getElementById('input').value = '';
-  // };
+    this.setState({ storageValue: response, battlePlayer: resp1 });
+  };
 
   render() {
     if (!this.state.web3) {
@@ -172,13 +155,12 @@ class App extends Component {
           a stored value of 5 (by default).
         </p>
         <button onClick={this.mintNyfti}>Mint Nyfti</button>
-        <button onClick={this.mintSeraph}>Mint Seraph</button>
         <button onClick={this.findBattle}>Find Battle</button>
         <button onClick={this.updateBattle}>Update Battle</button>
-        {/* <input id="input" onChange={(e) => {this.setState({newVal: e.target.value})}}></input>
-        <button onClick={this.updateValue}>Set Stored Value</button> */}
         <Arena
           battleAction={this.battleAction}
+          playerName={this.state.battlePlayer.name}
+          opponentName={this.state.battleOpponent.name}
           playerAbilities={this.state.battlePlayer.abilities}
           playerHealth={this.state.battlePlayer.currHealth}
           playerAttack={this.state.battlePlayer.attackPower}

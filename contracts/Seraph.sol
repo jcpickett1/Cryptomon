@@ -9,6 +9,6 @@ contract Seraph is Cryptomon {
     }
 
     function _mint(string memory _name) public {
-        mint(_name, 150, 150, 100, 255, "Gust", "Holy Light", "Sear", "Hark");
+        mint(_name, 255, 255, 255, 255, "Gust", "Holy Light", "Sear", "Hark");
     }
 }

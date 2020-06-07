@@ -2,43 +2,46 @@ import React, { Component } from "react";
 
 class Arena extends Component {
     render() {
-      console.log(this.props.playerAbilities)
-        return (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-around' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-around', background: 'gray', width: '30%', padding: '8px' }}>
-                <div>
-                  <b>Player</b>
-                  <br />
-                  Health: {this.props.playerHealth}
-                  <br />
-                  Speed: {this.props.playerSpeed}
-                  <br />
-                  Attack: {this.props.playerAttack}
-                  <br />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <b>Abilities</b>
-                  {/* {this.props.playerAbilities.map((e) => {
-                    return <button>{e}</button>
-                    })} */}
-                </div>
+      return (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-around', background: 'gray', width: '30%', padding: '8px' }}>
+              <div>
+                <b>Player</b>
+                <br />
+                Name: {this.props.playerName}
+                <br />
+                Health: {this.props.playerHealth}
+                <br />
+                Speed: {this.props.playerSpeed}
+                <br />
+                Attack: {this.props.playerAttack}
+                <br />
               </div>
-
-              {this.props.opponentHealth ?
-              <div style={{ background: 'red', width: '30%' }}>
-                <b>Opponent</b>
-                <br />
-                Health: {this.props.opponentHealth}
-                <br />
-                Speed: {this.props.opponentSpeed}
-                <br />
-                Attack: {this.props.opponentAttack}
-              </div> : ''}
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <b>Abilities</b>
+                {this.props.playerAbilities.map((e) => {
+                  return <button>{e}</button>
+                  })}
+              </div>
             </div>
-            <button onClick={this.props.battleAction}>Battle Action</button>
+
+            {(this.props.opponentHealth > 0) ?
+            <div style={{ background: 'red', width: '30%' }}>
+              <b>Opponent</b>
+              <br />
+              Name: {this.props.opponentName}
+              <br />
+              Health: {this.props.opponentHealth}
+              <br />
+              Speed: {this.props.opponentSpeed}
+              <br />
+              Attack: {this.props.opponentAttack}
+            </div> : ''}
           </div>
-        )
+          <button onClick={this.props.battleAction}>Battle Action</button>
+        </div>
+      )
     }
 }
 
