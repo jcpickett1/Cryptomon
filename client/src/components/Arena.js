@@ -20,8 +20,8 @@ class Arena extends Component {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <b>Abilities</b>
-                {this.props.playerAbilities.map((e) => {
-                  return <button>{e}</button>
+                {this.props.playerAbilities.map((e, ind) => {
+                  return <button key={ind}>{e}</button>
                   })}
               </div>
             </div>

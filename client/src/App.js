@@ -11,6 +11,7 @@ import Axios from "axios";
 
 class App extends Component {
   state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  backend = 'http://172.23.10.168:5000';
 
   componentDidMount = async () => {
     try {
@@ -34,11 +35,10 @@ class App extends Component {
       );
       this.battleAction = this.battleAction.bind(this);
 
-      const socket = openSocket('http://172.21.249.78:5000');
+      const socket = openSocket(this.backend);
       this.socket = socket;
       window.mintSeraph = this.mintSeraph;
-      socket.on('action1', (e) => { console.log('io emitted: ', e) });
-      socket.on('battleFound', async (e) => { console.log('battleFound', e); this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); this.updateBattle(); });
+      socket.on('battleFound', async (e) => { this.setState({ battleId: e }); socket.on('updateBattle' + this.state.battleId, this.updateBattle); this.updateBattle(); });
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -60,14 +60,14 @@ class App extends Component {
   };
 
   findBattle = async () => {
-    Axios.post('http://172.21.249.78:5000/initiate', { stats: this.state.battlePlayer, account: this.state.accounts[0] })
+    Axios.post(this.backend + '/initiate', { stats: this.state.battlePlayer, account: this.state.accounts[0] })
       .then((resp) => {
         this.setState({ position: resp.data.position });
       })
   }
 
   updateBattle = async () => {
-    Axios.get('http://172.21.249.78:5000/updateBattle', {
+    Axios.get(this.backend  + '/updateBattle', {
       params: {
         arena: this.state.battleId
       }
@@ -79,7 +79,7 @@ class App extends Component {
   }
 
   battleAction = async () => {
-    Axios.post('http://172.21.249.78:5000/battleAction', {
+    Axios.post(this.backend + '/battleAction', {
       arena: this.state.battleId,
       position: this.state.position
     })
